@@ -23,6 +23,9 @@
   ],
   "author": "",
   "license": "MIT",
+  "dependencies": {
+    "@vercel/node": "^3.0.0"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
