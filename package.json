@@ -1,23 +1,18 @@
 {
-  "name": "notebooklm-clone",
+  "name": "clonelm-root",
   "version": "1.0.0",
-  "description": "Google NotebookLM Clone - Frontend (Vercel) + Backend (Render)",
+  "description": "Root package for CloneLM - Backend deployment on Render",
+  "main": "backend/server.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm run dev",
-    "build": "cd frontend && npm install && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "build:backend": "cd backend && npm install",
-    "start:backend": "cd backend && npm start",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install --legacy-peer-deps"
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev",
+    "build": "cd backend && npm install",
+    "install:backend": "cd backend && npm install",
+    "render-start": "cd backend && node server.js"
   },
-  "keywords": ["notebooklm", "ai", "pdf", "chat", "langchain", "gemini", "vercel", "render"],
+  "keywords": ["notebooklm", "ai", "pdf", "chat", "langchain", "gemini"],
   "author": "Abhishek JHA",
   "license": "MIT",
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
   "engines": {
     "node": ">=18.0.0"
   }
