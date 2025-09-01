@@ -46,7 +46,10 @@ const upload = multer({
 });
 
 // Routes
+console.log('API Server starting...');
+
 app.post('/api/upload', upload.single('pdf'), async (req, res) => {
+  console.log('Upload endpoint called');
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -112,6 +115,7 @@ app.post('/api/process-pdf/:filename', async (req, res) => {
 
 // Ask question about processed PDF
 app.post('/api/ask', async (req, res) => {
+  console.log('Ask endpoint called');
   try {
     const { filename, question } = req.body;
 
@@ -173,7 +177,14 @@ app.delete('/api/document/:filename', (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => {
+  console.log('Health check called');
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('Test endpoint called');
+  res.json({ message: 'API is working!', timestamp: new Date().toISOString() });
 });
 
 // Vercel serverless function export
