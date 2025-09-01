@@ -4,7 +4,7 @@ const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const aiProcessor = require('./aiProcessor');
+const aiProcessor = require('./aiProcessor.js');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
