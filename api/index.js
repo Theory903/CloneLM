@@ -93,7 +93,7 @@ app.get('/api/files', (req, res) => {
 });
 
 // Process uploaded PDF
-app.post('/process-pdf/:filename', async (req, res) => {
+app.post('/api/process-pdf/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadsDir, filename);
@@ -111,7 +111,7 @@ app.post('/process-pdf/:filename', async (req, res) => {
 });
 
 // Ask question about processed PDF
-app.post('/ask', async (req, res) => {
+app.post('/api/ask', async (req, res) => {
   try {
     const { filename, question } = req.body;
 
@@ -128,7 +128,7 @@ app.post('/ask', async (req, res) => {
 });
 
 // Get document summary
-app.get('/summary/:filename', async (req, res) => {
+app.get('/api/summary/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const result = await aiProcessor.getDocumentSummary(filename);
@@ -140,7 +140,7 @@ app.get('/summary/:filename', async (req, res) => {
 });
 
 // Get processed documents
-app.get('/processed-documents', (req, res) => {
+app.get('/api/processed-documents', (req, res) => {
   try {
     const documents = aiProcessor.getProcessedDocuments();
     res.json({ documents });
@@ -151,7 +151,7 @@ app.get('/processed-documents', (req, res) => {
 });
 
 // Delete document and clean up
-app.delete('/document/:filename', (req, res) => {
+app.delete('/api/document/:filename', (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadsDir, filename);
@@ -172,7 +172,7 @@ app.delete('/document/:filename', (req, res) => {
 });
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 

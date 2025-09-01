@@ -35,7 +35,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
   const handleDelete = async (document: PDFDocument) => {
     if (confirm(`Are you sure you want to delete "${document.originalName}"?`)) {
       try {
-        const response = await fetch(`/document/${document.filename}`, {
+        const response = await fetch(`/api/document/${document.filename}`, {
           method: 'DELETE'
         })
 

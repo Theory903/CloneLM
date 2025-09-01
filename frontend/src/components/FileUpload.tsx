@@ -68,7 +68,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       const formData = new FormData()
       formData.append('pdf', file)
 
-      const uploadResponse = await fetch('/upload', {
+      const uploadResponse = await fetch('/api/upload', {
         method: 'POST',
         body: formData
       })
@@ -81,7 +81,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       // Process PDF
       setIsProcessing(true)
-      const processResponse = await fetch(`/process-pdf/${uploadData.file.filename}`, {
+      const processResponse = await fetch(`/api/process-pdf/${uploadData.file.filename}`, {
         method: 'POST'
       })
 
