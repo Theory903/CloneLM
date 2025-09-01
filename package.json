@@ -1,26 +1,22 @@
 {
   "name": "notebooklm-clone",
   "version": "1.0.0",
-  "description": "Google NotebookLM Clone with React frontend and Node.js backend",
-  "main": "api/index.js",
+  "description": "Google NotebookLM Clone - Frontend (Vercel) + Backend (Render)",
   "scripts": {
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && npm start",
+    "dev:backend": "cd backend && npm run dev",
     "build": "cd frontend && npm install && npm run build",
-    "build:vercel": "npm run build",
-    "start": "cd backend && npm start",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install --legacy-peer-deps",
-    "vercel-build": "npm run build"
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm install",
+    "start:backend": "cd backend && npm start",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install --legacy-peer-deps"
   },
-  "keywords": ["notebooklm", "ai", "pdf", "chat", "langchain", "gemini"],
-  "author": "Your Name",
+  "keywords": ["notebooklm", "ai", "pdf", "chat", "langchain", "gemini", "vercel", "render"],
+  "author": "Abhishek JHA",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
-  },
-  "dependencies": {
-    "@vercel/node": "^3.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
