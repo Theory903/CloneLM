@@ -46,7 +46,7 @@ const upload = multer({
 });
 
 // Routes
-app.post('/api/upload', upload.single('pdf'), async (req, res) => {
+app.post('/upload', upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -70,7 +70,7 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
   }
 });
 
-app.get('/api/files', (req, res) => {
+app.get('/files', (req, res) => {
   try {
     const files = fs.readdirSync(uploadsDir)
       .filter(file => file.endsWith('.pdf'))
@@ -93,7 +93,7 @@ app.get('/api/files', (req, res) => {
 });
 
 // Process uploaded PDF
-app.post('/api/process-pdf/:filename', async (req, res) => {
+app.post('/process-pdf/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadsDir, filename);
@@ -111,7 +111,7 @@ app.post('/api/process-pdf/:filename', async (req, res) => {
 });
 
 // Ask question about processed PDF
-app.post('/api/ask', async (req, res) => {
+app.post('/ask', async (req, res) => {
   try {
     const { filename, question } = req.body;
 
@@ -128,7 +128,7 @@ app.post('/api/ask', async (req, res) => {
 });
 
 // Get document summary
-app.get('/api/summary/:filename', async (req, res) => {
+app.get('/summary/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const result = await aiProcessor.getDocumentSummary(filename);
@@ -140,7 +140,7 @@ app.get('/api/summary/:filename', async (req, res) => {
 });
 
 // Get processed documents
-app.get('/api/processed-documents', (req, res) => {
+app.get('/processed-documents', (req, res) => {
   try {
     const documents = aiProcessor.getProcessedDocuments();
     res.json({ documents });
@@ -151,7 +151,7 @@ app.get('/api/processed-documents', (req, res) => {
 });
 
 // Delete document and clean up
-app.delete('/api/document/:filename', (req, res) => {
+app.delete('/document/:filename', (req, res) => {
   try {
     const { filename } = req.params;
     const filePath = path.join(uploadsDir, filename);
@@ -172,7 +172,7 @@ app.delete('/api/document/:filename', (req, res) => {
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 

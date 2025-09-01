@@ -4,8 +4,8 @@
   "installCommand": "npm run install:all",
   "framework": "vite",
   "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs18.x"
+    "api/index.js": {
+      "runtime": "@vercel/node"
     }
   },
   "rewrites": [
