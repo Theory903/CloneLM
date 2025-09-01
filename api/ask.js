@@ -1,7 +1,4 @@
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
-import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { ConversationalRetrievalQAChain } from 'langchain/chains';
+
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -11,7 +8,7 @@ export default async function handler(req, res) {
   try {
     console.log('Ask endpoint called');
     
-    const { question, chatHistory = [] } = req.body;
+    const { question } = req.body;
 
     if (!question) {
       return res.status(400).json({ error: 'Question is required' });
@@ -19,33 +16,14 @@ export default async function handler(req, res) {
 
     console.log('Question received:', question);
 
-    // Initialize the LLM
-    const llm = new ChatGoogleGenerativeAI({
-      model: 'gemini-1.5-flash',
-      apiKey: process.env.GOOGLE_API_KEY,
-      temperature: 0.7,
-    });
-
-    // Initialize embeddings
-    const embeddings = new GoogleGenerativeAIEmbeddings({
-      model: 'embedding-001',
-      apiKey: process.env.GOOGLE_API_KEY,
-    });
-
-    // For now, we'll create a simple response
-    // In production, you'd retrieve from your vector store
-    const response = await llm.invoke([
-      ['system', 'You are a helpful AI assistant that answers questions about uploaded documents. Always provide accurate, helpful responses.'],
-      ['human', question]
-    ]);
-
-    console.log('Response generated successfully');
-
+    // For now, return a simple response to test the endpoint
+    // We'll implement full AI processing later
     res.status(200).json({
       success: true,
-      answer: response.content,
-      citations: [], // Add citations when vector store is implemented
-      question: question
+      answer: `You asked: "${question}". This endpoint is working!`,
+      citations: [],
+      question: question,
+      timestamp: new Date().toISOString()
     });
 
   } catch (error) {
