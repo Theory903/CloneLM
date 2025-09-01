@@ -176,6 +176,9 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Vercel serverless function export
+module.exports = app;
+
 // For Vercel serverless functions
 module.exports.default = app;
 
