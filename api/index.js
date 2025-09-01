@@ -46,7 +46,7 @@ const upload = multer({
 });
 
 // Routes
-app.post('/upload', upload.single('pdf'), async (req, res) => {
+app.post('/api/upload', upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -70,7 +70,7 @@ app.post('/upload', upload.single('pdf'), async (req, res) => {
   }
 });
 
-app.get('/files', (req, res) => {
+app.get('/api/files', (req, res) => {
   try {
     const files = fs.readdirSync(uploadsDir)
       .filter(file => file.endsWith('.pdf'))
