@@ -46,6 +46,40 @@ A web-based application that enables users to upload and interact with PDF docum
 - **Semantic search** and retrieval
 - **Citation generation** with page references
 
+## 🚀 Deployment
+
+### Vercel (Recommended)
+This application is configured for **Vercel deployment** with both frontend and backend hosted on the same platform.
+
+#### Frontend
+- **Framework**: Vite + React
+- **Build Output**: `frontend/dist/`
+- **Static Hosting**: Automatically served by Vercel
+
+#### Backend
+- **Runtime**: Node.js 18.x
+- **Serverless Functions**: All API endpoints (`/api/*`)
+- **File Storage**: Temporary storage (resets on function cold start)
+
+#### Environment Variables
+Set these in your Vercel project:
+```env
+GOOGLE_API_KEY=your_google_api_key_here
+NODE_ENV=production
+```
+
+### Alternative Deployments
+
+#### Frontend Only (Netlify/Vercel)
+1. Build the frontend: `npm run build`
+2. Deploy the `dist/` folder
+3. Configure API base URL to point to your backend
+
+#### Backend Only (Railway/Render)
+1. Deploy the `backend/` folder
+2. Set environment variables
+3. Update frontend API calls to point to your backend URL
+
 ## 📋 Prerequisites
 
 Before running this application, make sure you have:
@@ -54,24 +88,21 @@ Before running this application, make sure you have:
 - **npm** or **yarn** package manager
 - **Google AI API Key** (Gemini API access)
 
-## 🔧 Installation
+## 🔧 Local Development
 
 ### 1. Clone the Repository
-
 ```bash
 git clone <repository-url>
 cd notebooklm-clone
 ```
 
-### 2. Backend Setup
-
+### 2. Install Dependencies
 ```bash
-cd backend
-npm install
+npm run install:all
 ```
 
-Create a `.env` file in the backend directory:
-
+### 3. Set Environment Variables
+Create `.env` file in the backend directory:
 ```env
 PORT=8080
 GOOGLE_API_KEY=your_google_api_key_here
@@ -80,217 +111,56 @@ UPLOAD_DIR=uploads
 MAX_FILE_SIZE=52428800
 ```
 
-### 3. Frontend Setup
-
+### 4. Start Development Servers
 ```bash
-cd ../frontend
-npm install
-```
-
-## 🚀 Running the Application
-
-### Development Mode
-
-1. **Start the Backend Server:**
-```bash
-cd backend
+# Start both frontend and backend
 npm run dev
-```
-The backend will run on `http://localhost:8080`
 
-2. **Start the Frontend Server:**
-```bash
-cd frontend
-npm run dev
-```
-The frontend will run on `http://localhost:5173`
-
-### Production Build
-
-1. **Build the Frontend:**
-```bash
-cd frontend
-npm run build
-```
-
-2. **Start the Backend:**
-```bash
-cd backend
-npm start
-```
-
-## 📖 Usage Guide
-
-### 1. Upload a PDF Document
-- Click on the **"Upload"** tab
-- Drag and drop your PDF file or click to browse
-- Wait for the document to be processed (this may take a few minutes for large files)
-
-### 2. Chat with Your Document
-- Switch to the **"Chat"** tab
-- Ask questions in natural language about your document
-- View AI-generated responses with source citations
-
-### 3. Navigate Citations
-- Click on any citation button in chat responses
-- The PDF viewer will open/navigate to the referenced page
-- View the source context directly in the document
-
-### 4. PDF Viewer Controls
-- **Zoom**: Use zoom in/out buttons or scroll
-- **Navigation**: Use arrow buttons or page input
-- **Rotation**: Rotate the document view
-- **Download**: Download the original PDF file
-
-## 🔍 API Endpoints
-
-### Backend API
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/upload` | Upload PDF file |
-| `POST` | `/api/process-pdf/:filename` | Process uploaded PDF |
-| `POST` | `/api/ask` | Ask question about document |
-| `GET` | `/api/summary/:filename` | Get document summary |
-| `GET` | `/api/processed-documents` | List processed documents |
-| `DELETE` | `/api/document/:filename` | Delete document |
-
-### Request Examples
-
-**Upload PDF:**
-```bash
-curl -X POST -F "pdf=@document.pdf" http://localhost:8080/api/upload
-```
-
-**Ask Question:**
-```bash
-curl -X POST http://localhost:8080/api/ask \
-  -H "Content-Type: application/json" \
-  -d '{"filename": "document.pdf", "question": "What is the main topic?"}'
+# Or start individually
+npm run dev:frontend  # Frontend on http://localhost:5173
+npm run dev:backend   # Backend on http://localhost:8080
 ```
 
 ## 🏗️ Architecture
 
-### Frontend Architecture
+### Vercel Deployment
 ```
-src/
-├── components/
-│   ├── FileUpload.tsx      # PDF upload component
-│   ├── ChatInterface.tsx   # Chat with citations
-│   ├── PDFViewer.tsx       # PDF viewing component
-│   └── DocumentList.tsx    # Document management
-├── types.ts                # TypeScript type definitions
-└── App.tsx                 # Main application component
+Frontend (Static) → Vercel Edge Network
+       ↓
+Backend (Serverless) → Vercel Functions
+       ↓
+AI Processing → Google Gemini API
 ```
 
-### Backend Architecture
+### Local Development
 ```
-backend/
-├── server.js               # Express server setup
-├── aiProcessor.js          # Langchain & Gemini integration
-├── uploads/                # Uploaded PDF files
-├── package.json
-└── .env                    # Environment configuration
+Frontend (Vite) → Proxy → Backend (Express)
+       ↓
+Backend → AI Processing → Google Gemini API
 ```
-
-### Data Flow
-1. **Upload**: PDF → Server → File Storage
-2. **Processing**: PDF → Text Extraction → Chunking → Vectorization
-3. **Query**: Question → Semantic Search → AI Generation → Response + Citations
-4. **Display**: Response → Chat UI → Citation Navigation → PDF Viewer
 
 ## 🔐 Security Considerations
 
+- **API Key Protection**: Store API keys securely in Vercel environment variables
 - **File Validation**: Only PDF files accepted with size limits
-- **API Key Protection**: Store API keys securely in environment variables
 - **CORS Configuration**: Proper CORS setup for cross-origin requests
 - **Input Sanitization**: Validate and sanitize all user inputs
 
-## 🚀 Deployment
+## 🚀 Production Deployment
 
-### Free Hosting Options
+### Vercel (Automatic)
+1. **Connect Repository**: Link your GitHub repository to Vercel
+2. **Set Environment Variables**: Add `GOOGLE_API_KEY` in Vercel dashboard
+3. **Deploy**: Vercel automatically builds and deploys on every push
 
-#### Frontend (Netlify)
-1. Build the frontend: `npm run build`
-2. Upload the `dist/` folder to Netlify
-3. Configure build settings if needed
-
-#### Backend (Render)
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Set build command: `npm install`
-4. Set start command: `npm start`
-5. Add environment variables
-
-#### Backend (Railway)
-1. Connect your GitHub repository
-2. Railway auto-detects Node.js projects
-3. Add environment variables
-4. Deploy automatically
-
-### Environment Variables for Production
-```env
-PORT=8080
-GOOGLE_API_KEY=your_production_api_key
-NODE_ENV=production
-UPLOAD_DIR=uploads
-MAX_FILE_SIZE=52428800
-```
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Backend won't start:**
-- Check if port 8080 is available
-- Verify Google API key is valid
-- Ensure all dependencies are installed
-
-**Frontend build fails:**
-- Clear node_modules and reinstall
-- Check Node.js version compatibility
-- Verify all TypeScript types are correct
-
-**PDF processing fails:**
-- Check file size (max 50MB)
-- Ensure PDF is not password-protected
-- Verify Google API quota/limits
-
-**CORS errors:**
-- Backend and frontend must run on different ports
-- CORS is configured for localhost origins
-
-### Debug Mode
-
-Enable debug logging by setting:
-```env
-NODE_ENV=development
-DEBUG=*
-```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Commit changes: `git commit -am 'Add feature'`
-4. Push to branch: `git push origin feature-name`
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- **Google Gemini AI** for powerful language models
-- **Langchain** for AI orchestration framework
-- **React & Vite** for modern frontend development
-- **Tailwind CSS** for beautiful UI components
+### Manual Deployment
+1. **Build Frontend**: `npm run build`
+2. **Deploy Backend**: Upload backend folder to your hosting provider
+3. **Configure**: Set environment variables and update API endpoints
 
 ## 📞 Support
 
-If you encounter any issues or have questions:
+If you encounter any issues:
 
 1. Check the troubleshooting section above
 2. Review the API documentation
@@ -300,3 +170,7 @@ If you encounter any issues or have questions:
 ---
 
 **Happy Document Chatting! 📄🤖**
+
+## 🌐 Live Demo
+
+**Coming Soon**: This application will be deployed on Vercel with both frontend and backend hosted on the same platform for seamless integration.

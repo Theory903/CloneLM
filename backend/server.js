@@ -20,9 +20,6 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Serve uploaded PDFs statically (proxied by Vite under /api)
-app.use('/api/uploads', express.static(uploadsDir));
-
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -179,9 +176,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Google API Key configured: ${process.env.GOOGLE_API_KEY ? 'Yes' : 'No'}`);
-});
+// Only start server if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Google API Key configured: ${process.env.GOOGLE_API_KEY ? 'Yes' : 'No'}`);
+  });
+}
 
 module.exports = app;
