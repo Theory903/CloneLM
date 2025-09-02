@@ -217,7 +217,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
                 onLoadError={(error) => {
                   console.error('PDF load error:', error)
                   setIsLoading(false)
-                  setError('Failed to load PDF. Please check if the file exists and try again.')
+                  setError(`Failed to load PDF: ${error.message || 'Unknown error'}. Please check if the file exists and try again.`)
                 }}
                 loading={
                   <div className="text-center">

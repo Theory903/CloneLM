@@ -20,6 +20,16 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Production file storage configuration
+const isProduction = process.env.NODE_ENV === 'production';
+const maxFileSize = isProduction ? 25 * 1024 * 1024 : 50 * 1024 * 1024; // 25MB in production, 50MB locally
+
+console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`Uploads directory: ${uploadsDir}`);
+console.log(`Max file size: ${maxFileSize / (1024 * 1024)}MB`);
+console.log(`Directory exists: ${fs.existsSync(uploadsDir)}`);
+console.log(`Directory writable: ${fs.accessSync(uploadsDir, fs.constants.W_OK) ? 'Yes' : 'No'}`);
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -34,7 +44,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit
+    fileSize: maxFileSize, // Use production-aware file size limit
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -45,6 +55,40 @@ const upload = multer({
   }
 });
 
+// Production file cleanup and monitoring
+if (isProduction) {
+  // Clean up old files periodically (keep only last 10 files)
+  setInterval(() => {
+    try {
+      const files = fs.readdirSync(uploadsDir);
+      if (files.length > 10) {
+        const fileStats = files.map(filename => {
+          const filePath = path.join(uploadsDir, filename);
+          const stats = fs.statSync(filePath);
+          return { filename, filePath, mtime: stats.mtime };
+        });
+        
+        // Sort by modification time and remove oldest files
+        fileStats.sort((a, b) => a.mtime.getTime() - b.mtime.getTime());
+        const filesToRemove = fileStats.slice(0, fileStats.length - 10);
+        
+        filesToRemove.forEach(({ filename, filePath }) => {
+          try {
+            fs.unlinkSync(filePath);
+            console.log(`Cleaned up old file: ${filename}`);
+          } catch (error) {
+            console.error(`Failed to clean up file ${filename}:`, error.message);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('File cleanup error:', error.message);
+    }
+  }, 30 * 60 * 1000); // Run every 30 minutes
+  
+  console.log('Production file cleanup enabled');
+}
+
 // Routes
 app.post('/api/upload', upload.single('pdf'), async (req, res) => {
   try {
@@ -52,13 +96,32 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    // Verify file was actually saved
+    if (!fs.existsSync(req.file.path)) {
+      return res.status(500).json({ error: 'File upload failed - file not saved' });
+    }
+
+    // Get file stats to verify
+    const stats = fs.statSync(req.file.path);
+    if (stats.size === 0) {
+      // Remove empty file
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Uploaded file is empty' });
+    }
+
     const fileInfo = {
       filename: req.file.filename,
       originalName: req.file.originalname,
       size: req.file.size,
       path: req.file.path,
-      uploadTime: new Date().toISOString()
+      uploadTime: new Date().toISOString(),
+      mimeType: req.file.mimetype,
+      savedPath: req.file.path,
+      fileExists: fs.existsSync(req.file.path),
+      fileSize: stats.size
     };
+
+    console.log(`File uploaded successfully: ${req.file.filename} (${stats.size} bytes) at ${req.file.path}`);
 
     res.json({
       message: 'File uploaded successfully',
@@ -74,23 +137,69 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
 app.get('/api/files/:filename', (req, res) => {
   try {
     const { filename } = req.params;
-    const filePath = path.join(uploadsDir, filename);
-
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'File not found' });
+    
+    // Validate filename
+    if (!filename || filename.includes('..') || filename.includes('/')) {
+      return res.status(400).json({ error: 'Invalid filename' });
     }
-
+    
+    const filePath = path.join(uploadsDir, filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      console.error(`File not found: ${filePath}`);
+      return res.status(404).json({ 
+        error: 'File not found',
+        filename: filename,
+        path: filePath,
+        uploadsDir: uploadsDir
+      });
+    }
+    
+    // Get file stats
+    const stats = fs.statSync(filePath);
+    
+    // Check if it's actually a file (not a directory)
+    if (!stats.isFile()) {
+      return res.status(400).json({ error: 'Not a file' });
+    }
+    
+    // Check file size
+    if (stats.size === 0) {
+      return res.status(400).json({ error: 'File is empty' });
+    }
+    
     // Set proper headers for PDF viewing
     res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', stats.size);
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
     res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-
-    // Stream the file
+    res.setHeader('Accept-Ranges', 'bytes');
+    
+    // Stream the file with error handling
     const fileStream = fs.createReadStream(filePath);
+    
+    fileStream.on('error', (error) => {
+      console.error('File stream error:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to read file' });
+      }
+    });
+    
+    fileStream.on('open', () => {
+      console.log(`Serving file: ${filename} (${stats.size} bytes)`);
+    });
+    
     fileStream.pipe(res);
+    
   } catch (error) {
     console.error('File serving error:', error);
-    res.status(500).json({ error: 'Failed to serve file' });
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        error: 'Failed to serve file',
+        details: error.message 
+      });
+    }
   }
 });
 
@@ -219,6 +328,47 @@ app.delete('/api/document/:filename', (req, res) => {
   } catch (error) {
     console.error('Delete document error:', error);
     res.status(500).json({ error: 'Failed to delete document' });
+  }
+});
+
+// Debug endpoint to check file system status
+app.get('/api/debug/files', (req, res) => {
+  try {
+    const files = fs.readdirSync(uploadsDir);
+    const fileDetails = files.map(filename => {
+      const filePath = path.join(uploadsDir, filename);
+      try {
+        const stats = fs.statSync(filePath);
+        return {
+          filename,
+          size: stats.size,
+          isFile: stats.isFile(),
+          isDirectory: stats.isDirectory(),
+          modified: stats.mtime,
+          path: filePath
+        };
+      } catch (error) {
+        return {
+          filename,
+          error: error.message
+        };
+      }
+    });
+    
+    res.json({
+      uploadsDir,
+      totalFiles: files.length,
+      files: fileDetails,
+      directoryExists: fs.existsSync(uploadsDir),
+      directoryStats: fs.existsSync(uploadsDir) ? fs.statSync(uploadsDir) : null
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Failed to get debug info',
+      details: error.message,
+      uploadsDir
+    });
   }
 });
 
