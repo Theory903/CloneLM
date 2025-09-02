@@ -2,11 +2,6 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from 'lucide-react'
 import type { PDFDocument } from '../types'
 
-// Configure pdf.js worker for Vite/ESM
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-
 interface PDFViewerProps {
   document: PDFDocument
   goToPage?: number
@@ -16,6 +11,9 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [scale, setScale] = useState(1.0)
+
+  // Debug logging
+  console.log('PDFViewer rendered with document:', document)
 
   useEffect(() => {
     // If parent requests a page jump, clamp and set
@@ -52,6 +50,17 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
     setTotalPages(0)
   }, [document])
 
+  // Safety check for document
+  if (!document) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500">No document selected</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-sm border h-full flex flex-col">
       {/* Toolbar */}
@@ -84,8 +93,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
             >
               <ZoomIn className="h-4 w-4" />
             </button>
-
-
 
             <button
               onClick={handleDownload}
