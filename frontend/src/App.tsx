@@ -6,15 +6,17 @@ import type { PDFDocument } from './types'
 
 function App() {
   const [currentDocument, setCurrentDocument] = useState<PDFDocument | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
   const [viewerPage, setViewerPage] = useState<number | undefined>(undefined)
   const [leftWidthPct, setLeftWidthPct] = useState(50)
   const draggingRef = useRef(false)
 
-  const handleDocumentProcessed = (document: PDFDocument) => {
+  const handleFileProcessed = (document: PDFDocument) => {
     setCurrentDocument(document)
-    setIsProcessing(false)
     setViewerPage(1)
+  }
+
+  const handleNavigateToPage = (page: number) => {
+    setViewerPage(page)
   }
 
   useEffect(() => {
@@ -45,9 +47,7 @@ function App() {
         <div className="h-screen flex items-center justify-center">
           <div className="w-full max-w-2xl px-4">
             <FileUpload
-              onDocumentProcessed={handleDocumentProcessed}
-              setIsProcessing={setIsProcessing}
-              isProcessing={isProcessing}
+              onFileProcessed={handleFileProcessed}
             />
           </div>
         </div>
@@ -58,12 +58,8 @@ function App() {
             style={{ width: `${leftWidthPct}%` }}
           >
             <ChatInterface
-              currentDocument={currentDocument}
-              onCitationClick={(page) => setViewerPage(page)}
-              onUploadNew={() => {
-                setCurrentDocument(null)
-                setViewerPage(undefined)
-              }}
+              currentDocument={currentDocument.filename}
+              onNavigateToPage={handleNavigateToPage}
             />
           </div>
           <div
