@@ -31,6 +31,10 @@ export const API_ENDPOINTS = {
   FILES: '/files',
   PROCESS_PDF: '/process-pdf',
   
+  // File Viewing & Download
+  VIEW_FILE: '/files',
+  DOWNLOAD_FILE: '/download',
+  
   // AI Interaction
   ASK: '/ask',
   SUMMARY: '/summary',
@@ -53,4 +57,14 @@ export const buildApiUrl = (endpoint: string, params?: Record<string, string>): 
   }
   
   return url;
+};
+
+// Helper function to build file viewing URLs
+export const buildFileViewUrl = (filename: string): string => {
+  return buildApiUrl(`${API_ENDPOINTS.VIEW_FILE}/${filename}`);
+};
+
+// Helper function to build file download URLs
+export const buildFileDownloadUrl = (filename: string): string => {
+  return buildApiUrl(`${API_ENDPOINTS.DOWNLOAD_FILE}/${filename}`);
 };

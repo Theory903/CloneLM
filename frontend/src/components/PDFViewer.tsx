@@ -1,6 +1,14 @@
-import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react'
 import type { PDFDocument } from '../types'
+import { Document as PDFDoc, Page, pdfjs } from 'react-pdf'
+import { buildFileViewUrl, buildFileDownloadUrl } from '../config/api'
+import LoadingSpinner from './LoadingSpinner'
+
+// Configure pdf.js worker for Vite/ESM
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
 
 interface PDFViewerProps {
   document: PDFDocument
@@ -11,9 +19,19 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [scale, setScale] = useState(1.0)
+  const [rotation, setRotation] = useState(0)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Debug logging
-  console.log('PDFViewer rendered with document:', document)
+  // Build the correct file URL for viewing
+  const fileUrl = useMemo(() => {
+    return buildFileViewUrl(document.filename)
+  }, [document.filename])
+
+  // Build download URL
+  const downloadUrl = useMemo(() => {
+    return buildFileDownloadUrl(document.filename)
+  }, [document.filename])
 
   useEffect(() => {
     // If parent requests a page jump, clamp and set
@@ -39,15 +57,25 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
     setScale(prev => Math.max(0.5, prev - 0.25))
   }
 
+  const handleRotate = () => {
+    setRotation(prev => (prev + 90) % 360)
+  }
+
   const handleDownload = () => {
-    // For now, show a message that download is not implemented
-    alert('Download functionality will be implemented when file serving is set up on the backend.')
+    const a = window.document.createElement('a')
+    a.href = downloadUrl
+    a.download = document.originalName || document.filename
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    a.click()
   }
 
   useEffect(() => {
     // reset when document changes
+    setIsLoading(true)
     setCurrentPage(1)
     setTotalPages(0)
+    setError(null)
   }, [document])
 
   // Safety check for document
@@ -92,6 +120,14 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
               title="Zoom in"
             >
               <ZoomIn className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={handleRotate}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+              title="Rotate"
+            >
+              <RotateCcw className="h-4 w-4" />
             </button>
 
             <button
@@ -154,24 +190,54 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
               width: '100%'
             }}
           >
-            {/* For now, show a placeholder since we need to implement file serving */}
-            <div className="text-center p-8">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+            {error ? (
+              <div className="text-center p-8">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-red-900 mb-2">Error Loading PDF</h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Retry
+                </button>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">PDF Document Ready</h3>
-              <p className="text-gray-600 mb-4">
-                Document: <strong>{document.originalName}</strong>
-              </p>
-              <p className="text-sm text-gray-500">
-                PDF viewing will be available once file serving is implemented on the backend.
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                You can still chat with the AI about this document's content!
-              </p>
-            </div>
+            ) : (
+              <PDFDoc
+                file={fileUrl}
+                onLoadSuccess={({ numPages }) => {
+                  setTotalPages(numPages)
+                  setIsLoading(false)
+                  setError(null)
+                }}
+                onLoadError={(error) => {
+                  console.error('PDF load error:', error)
+                  setIsLoading(false)
+                  setError('Failed to load PDF. Please check if the file exists and try again.')
+                }}
+                loading={
+                  <div className="text-center">
+                    <LoadingSpinner size="lg" className="text-blue-600 mx-auto mb-4" />
+                    <p className="text-gray-600">Loading PDF...</p>
+                  </div>
+                }
+                error={<p className="text-red-600 p-4">Failed to load PDF.</p>}
+              >
+                {!isLoading && (
+                  <Page 
+                    pageNumber={currentPage} 
+                    scale={scale} 
+                    rotate={rotation} 
+                    renderTextLayer={false} 
+                    renderAnnotationLayer={false} 
+                  />
+                )}
+              </PDFDoc>
+            )}
           </div>
         </div>
       </div>

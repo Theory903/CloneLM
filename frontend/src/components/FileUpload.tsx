@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react';
-import { Upload } from 'lucide-react';
 import { buildApiUrl, API_ENDPOINTS } from '../config/api';
 import { type PDFDocument } from '../types';
 import LoadingSpinner from './LoadingSpinner';
@@ -112,24 +111,39 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed }) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          isDragOver
-            ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+      <label 
+        className={`relative flex flex-col items-center gap-6 p-12 bg-white rounded-xl shadow-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+          isDragOver ? 'bg-purple-50 border-2 border-purple-300' : ''
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+        <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="lucide lucide-upload w-8 h-8 text-purple-600"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" x2="12" y1="3" y2="15"></line>
+          </svg>
+        </div>
         
-        <div className="space-y-2">
-          <p className="text-lg font-medium text-gray-900">
-            Upload your PDF document
-          </p>
-          <p className="text-sm text-gray-500">
-            Drag and drop your PDF here, or click to browse
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            {isUploading ? 'Processing your PDF...' : 'Upload PDF to start chatting'}
+          </h2>
+          <p className="text-gray-500">
+            {isUploading ? 'Please wait while we process your document' : 'Click or drag and drop your file here'}
           </p>
         </div>
 
@@ -139,40 +153,34 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileProcessed }) => {
           accept=".pdf"
           onChange={handleFileSelect}
           className="hidden"
+          disabled={isUploading}
         />
 
-        <button
-          type="button"
-          onClick={() => document.getElementById('file-input')?.click()}
-          disabled={isUploading}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Choose File
-        </button>
-
         {isUploading && (
-          <div className="mt-4 space-y-2">
+          <div className="w-full space-y-3">
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               ></div>
             </div>
-            <p className="text-sm text-gray-600">{uploadStatus}</p>
-            <LoadingSpinner />
+            <p className="text-sm text-gray-600 text-center">{uploadStatus}</p>
+            <div className="flex justify-center">
+              <LoadingSpinner />
+            </div>
           </div>
         )}
 
         {uploadStatus && !isUploading && (
-          <div className="mt-4">
-            <p className={`text-sm ${
+          <div className="w-full">
+            <p className={`text-sm text-center ${
               uploadStatus.includes('Error') ? 'text-red-600' : 'text-green-600'
             }`}>
               {uploadStatus}
             </p>
           </div>
         )}
-      </div>
+      </label>
     </div>
   );
 };

@@ -70,6 +70,57 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
   }
 });
 
+// NEW: Serve PDF files for viewing
+app.get('/api/files/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(uploadsDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Set proper headers for PDF viewing
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+
+    // Stream the file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('File serving error:', error);
+    res.status(500).json({ error: 'Failed to serve file' });
+  }
+});
+
+// NEW: Download PDF files
+app.get('/api/download/:filename', (req, res) => {
+  try {
+    const { filename } = req.params;
+    const filePath = path.join(uploadsDir, filename);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Get original filename from metadata or use stored filename
+    const originalName = filename.includes('-') ? filename.split('-').slice(2).join('-') : filename;
+    
+    // Set headers for download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${originalName}"`);
+    res.setHeader('Content-Length', fs.statSync(filePath).size);
+
+    // Stream the file for download
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: 'Failed to download file' });
+  }
+});
+
 app.get('/api/files', (req, res) => {
   try {
     const files = fs.readdirSync(uploadsDir)
@@ -184,5 +235,6 @@ if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Google API Key configured: ${process.env.GOOGLE_API_KEY ? 'Yes' : 'No'}`);
+    console.log(`Uploads directory: ${uploadsDir}`);
   });
 }
