@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RotateCcw, Download } from 'lucide-react'
-import LoadingSpinner from './LoadingSpinner'
+import { useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Download } from 'lucide-react'
 import type { PDFDocument } from '../types'
-import { Document as PDFDoc, Page, pdfjs } from 'react-pdf'
 
 // Configure pdf.js worker for Vite/ESM
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -18,9 +16,6 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [scale, setScale] = useState(1.0)
-  const [rotation, setRotation] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-  const fileUrl = useMemo(() => `/api/uploads/${document.filename}`, [document.filename])
 
   useEffect(() => {
     // If parent requests a page jump, clamp and set
@@ -46,22 +41,13 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
     setScale(prev => Math.max(0.5, prev - 0.25))
   }
 
-  const handleRotate = () => {
-    setRotation(prev => (prev + 90) % 360)
-  }
-
   const handleDownload = () => {
-    const a = window.document.createElement('a')
-    a.href = fileUrl
-    a.download = document.originalName || document.filename
-    a.target = '_blank'
-    a.rel = 'noopener noreferrer'
-    a.click()
+    // For now, show a message that download is not implemented
+    alert('Download functionality will be implemented when file serving is set up on the backend.')
   }
 
   useEffect(() => {
     // reset when document changes
-    setIsLoading(true)
     setCurrentPage(1)
     setTotalPages(0)
   }, [document])
@@ -99,13 +85,7 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
               <ZoomIn className="h-4 w-4" />
             </button>
 
-            <button
-              onClick={handleRotate}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
-              title="Rotate"
-            >
-              <RotateCcw className="h-4 w-4" />
-            </button>
+
 
             <button
               onClick={handleDownload}
@@ -167,25 +147,24 @@ const PDFViewer: React.FC<PDFViewerProps> = ({ document, goToPage }) => {
               width: '100%'
             }}
           >
-            <PDFDoc
-              file={fileUrl}
-              onLoadSuccess={({ numPages }) => {
-                setTotalPages(numPages)
-                setIsLoading(false)
-              }}
-              onLoadError={() => setIsLoading(false)}
-              loading={
-                <div className="text-center">
-                  <LoadingSpinner size="lg" className="text-blue-600 mx-auto mb-4" />
-                  <p className="text-gray-600">Loading PDF...</p>
-                </div>
-              }
-              error={<p className="text-red-600 p-4">Failed to load PDF.</p>}
-            >
-              {!isLoading && (
-                <Page pageNumber={currentPage} scale={scale} rotate={rotation} renderTextLayer={false} renderAnnotationLayer={false} />
-              )}
-            </PDFDoc>
+            {/* For now, show a placeholder since we need to implement file serving */}
+            <div className="text-center p-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">PDF Document Ready</h3>
+              <p className="text-gray-600 mb-4">
+                Document: <strong>{document.originalName}</strong>
+              </p>
+              <p className="text-sm text-gray-500">
+                PDF viewing will be available once file serving is implemented on the backend.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                You can still chat with the AI about this document's content!
+              </p>
+            </div>
           </div>
         </div>
       </div>
